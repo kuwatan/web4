@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>デジタルサイネージ</title>
+  <link type="text/css" rel="stylesheet" href="style.css">
+</head>
+<body background="bak.png">
+
+  <div id="main-container">
+    <div id="datetime-container" class="box">
+      <div id="datetime">読み込み中...</div>
+      <iframe src="https://calendar.google.com/calendar/embed?height=600&wkst=1&ctz=Asia%2FTokyo&showPrint=0&showTitle=0&mode=AGENDA&showNav=0&showTabs=0&showCalendars=0&showTz=0&showDate=0&src=ZGI4ZGM2NzNkNmNhN2JkODZkYWM3Y2FjZmM2YmZmYzExMjdiOTA1NTIyZTY1ZDg1MzRjYTJkNjA2MjQ0N2ZiYkBncm91cC5jYWxlbmRhci5nb29nbGUuY29t&color=%23f09300" style="border-width:0" width="800" height="550" frameborder="0" scrolling="no"></iframe>
+    </div>
+
+    <div id="weather-news" class="box">
+      <style>.max_temp{display:inline-block !important}.min_temp{display:inline-block !important}.temp{display:block !important}.rain_s{display:block !important}.pop-rain{undefined}.speed-wind{undefined}.deg-wind{undefined}.w_snow{undefined}.w_bg{background:linear-gradient(to right,#ffffff, #fff)}</style><link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.12/css/weather-icons.min.css"><link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.12/css/weather-icons-wind.css"><link href="https://use.fontawesome.com/releases/v5.6.1/css/all.css" rel="stylesheet"><script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script><script type="text/javascript">weather_value=7;lat = 36.648537;lon =138.194824;inputText1 = "長野県長野市";search_add = "長野県長野市";</script><script src="https://sitecreation.co.jp/wp-content/themes/sango-theme-child/tpl/weather.js"></script><link id="PageStyleSheet" rel="stylesheet" href="https://sitecreation.co.jp/wp-content/themes/sango-theme-child/tpl/style.css"><div id="weather-wrapper"><div id="weather1"></div><div id="weather2"></div></div>
+      <div id="news-box">ニュース取得中...</div>
+    </div>
+  </div> 
+
+  <script>
+    function updateDateTime() {
+      const now = new Date();
+      const days = ['日', '月', '火', '水', '木', '金', '土'];
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1;
+      const date = now.getDate();
+      const day = days[now.getDay()];
+      const hour = String(now.getHours()).padStart(2, '0');
+      const minute = String(now.getMinutes()).padStart(2, '0');
+      const second = String(now.getSeconds()).padStart(2, '0');
+      const dateStr = `${year}年${month}月${date}日 (${day})`;
+      const timeStr = `<div class="time">${hour}:${minute}:${second}</div>`;
+      document.getElementById('datetime').innerHTML = `${dateStr}<br>${timeStr}`;
+    }
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+    
+    // ニュース
+    async function fetchNews() {
+      const rssUrl = 'https://www3.nhk.or.jp/rss/news/cat0.xml';
+      try {
+        const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(rssUrl)}`);
+        const data = await res.json();
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(data.contents, 'application/xml');
+        const items = xml.querySelectorAll('item');
+        let html = `<strong>主なニュース</strong><ul>`;
+        items.forEach((item, i) => {
+          if (i >= 5) return;
+          const title = item.querySelector('title').textContent;
+          const link = item.querySelector('link').textContent;
+          html += `<li><a href="${link}" target="_blank">${title}</a></li>`;
+        });
+        html += `</ul>`;
+        document.getElementById('news-box').innerHTML = html;
+      } catch {
+        document.getElementById('news-box').textContent = 'ニュースの取得に失敗しました';
+      }
+    }
+
+    fetchNews();
+    setInterval(fetchWeather, 1800000);
+    setInterval(fetchNews, 1800000);
+  </script>
+
+</body>
+</html>
